@@ -1,0 +1,13 @@
+[package]
+name = "points"
+version = "0.1.0"
+authors = ["milesrl <soccermiles1@gmail.com>"]
+
+[dependencies]
+nalgebra = "0.11.*"
+glutin = "0.7.*"
+gl = "0.6.*"
+
+[build-dependencies]
+gl_generator = "0.5.*"
+khronos_api = "1.0.*"
