@@ -14,10 +14,10 @@ use na::geometry as geom;
 const INIT_W: i32 = 600;
 const INIT_H: i32 = 600;
 const NPOINTS_SIDE: i32 = 150;
-const POINT_SIZE: f32 = 1.5;
+const POINT_SIZE: f32 = 5.0;
 
 const INIT_FOV: f32 = 70.0;
-const INIT_POS: (f32, f32, f32) = (0.0, 0.0, 2.0);
+const INIT_POS: (f32, f32, f32) = (0.0, 0.0, 5.0);
 const LOOK_RATE: f32 = 1.0;
 const MOVE_RATE: f32 = 0.5;
 
@@ -25,7 +25,7 @@ fn main() {
     let window = WindowBuilder::new()
         .with_dimensions(INIT_W as u32, INIT_H as u32)
         .with_title("Glutin Window")
-        .with_gl(GlRequest::Specific(Api::OpenGl, (4, 4)))
+        .with_gl(GlRequest::Specific(Api::OpenGl, (3, 3)))
         .build().unwrap();
 
     unsafe {
@@ -36,11 +36,11 @@ fn main() {
     gl::load_with(|s: &str| window.get_proc_address(s) as *const c_void);
 
     let gl_string = |x: *const u8| unsafe {
-        CStr::from_ptr(x as *const i8).to_str().unwrap()
+        CStr::from_ptr(x as *const c_char).to_str().unwrap()
     };
 
-    let vertex_source = CString::new("#version 400
-in vec2 vp;
+    let vertex_source = CString::new("#version 330
+layout(location = 0) in vec2 vp;
 uniform float time;
 uniform mat4 view;
 uniform mat4 projection;
@@ -51,10 +51,10 @@ void main() {
   origPos = vp;
   offset = noise3(vec3(vp * 2.0, time * 0.2));
   mat4 mvp = /*model * */ projection * view;
-  gl_Position = mvp * vec4(vec3(vp, 0.0) + (offset * 0.4), 1.0);
+  gl_Position = mvp * vec4(vec3(vp, 0.0) + (offset * 0.3), 1.0);
 }
 ").unwrap();
-    let fragment_source = CString::new("#version 400
+    let fragment_source = CString::new("#version 330
 in vec3 offset;
 in vec2 origPos;
 out vec4 frag_color;
@@ -103,8 +103,8 @@ void main() {
 
         let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
         let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &(vertex_source.as_ptr() as *const i8), 0 as *const i32);
-        gl::ShaderSource(fragment_shader, 1, &(fragment_source.as_ptr() as *const i8), 0 as *const i32);
+        gl::ShaderSource(vertex_shader, 1, &(vertex_source.as_ptr() as *const c_char), 0 as *const i32);
+        gl::ShaderSource(fragment_shader, 1, &(fragment_source.as_ptr() as *const c_char), 0 as *const i32);
         gl::CompileShader(vertex_shader);
         let mut success: i32 = 0;
         gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success);
@@ -115,7 +115,7 @@ void main() {
             let mut infolog = vec![0 as u8; log_len as usize];
             gl::GetShaderInfoLog(
                 vertex_shader, log_len, &mut copied_len,
-                infolog.as_mut_slice().as_mut_ptr() as *mut i8
+                infolog.as_mut_slice().as_mut_ptr() as *mut c_char
             );
             panic!("ERROR COMPILING VERTEX SHADER\n{}", String::from_utf8_unchecked(infolog));
         }
@@ -130,7 +130,7 @@ void main() {
             let mut infolog = vec![0 as u8; log_len as usize];
             gl::GetShaderInfoLog(
                 fragment_shader, log_len, &mut copied_len,
-                infolog.as_mut_slice().as_mut_ptr() as *mut i8
+                infolog.as_mut_slice().as_mut_ptr() as *mut c_char
             );
             panic!("ERROR COMPILING FRAGMENT SHADER\n{}", String::from_utf8_unchecked(infolog));
         }
@@ -148,7 +148,7 @@ void main() {
             let mut infolog = vec![0 as u8; log_len as usize];
             gl::GetProgramInfoLog(
                 shader_program, log_len, &mut copied_len,
-                infolog.as_mut_slice().as_mut_ptr() as *mut i8
+                infolog.as_mut_slice().as_mut_ptr() as *mut c_char
             );
             panic!("ERROR LINKING SHADER PROGRAM\n{}", String::from_utf8_unchecked(infolog));
         }
